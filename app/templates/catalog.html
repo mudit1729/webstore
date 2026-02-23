@@ -103,7 +103,7 @@
         {% endfor %}
     </div>
 
-    {# Instagram Section #}
+    {# Instagram Section — uses Instagram's official embed.js to show full posts with images #}
     {% if instagram_posts %}
     <section class="insta-section">
         <div class="insta-header">
@@ -114,17 +114,17 @@
             </p>
         </div>
         <div class="insta-grid">
-            {% for post_url in instagram_posts %}
-            <a href="{{ post_url }}" target="_blank" rel="noopener" class="insta-card">
-                <div class="insta-card-gradient"></div>
-                <div class="insta-card-icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                </div>
-                <div class="insta-card-body">
-                    <span class="insta-card-label">View on Instagram</span>
-                    <span class="insta-card-arrow">&rarr;</span>
-                </div>
-            </a>
+            {% for post_url in instagram_posts[:3] %}
+            <div class="insta-embed-card">
+                <blockquote class="instagram-media"
+                    data-instgrm-permalink="{{ post_url }}/"
+                    data-instgrm-version="14"
+                    style="background:#FFF; border:0; border-radius:8px; box-shadow:none; margin:0; max-width:540px; min-width:280px; padding:0; width:100%;">
+                    <a href="{{ post_url }}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;min-height:300px;color:#8B5A2B;text-decoration:none;font-size:14px;">
+                        View on Instagram →
+                    </a>
+                </blockquote>
+            </div>
             {% endfor %}
         </div>
         <div class="insta-cta">
@@ -134,6 +134,7 @@
             </a>
         </div>
     </section>
+    <script async src="//www.instagram.com/embed.js"></script>
     {% endif %}
 
     {# Pagination #}
