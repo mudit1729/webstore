@@ -12,9 +12,6 @@ SQLAlchemy==2.0.36
 redis==5.2.1
 rq==2.1.0
 
-# S3
-boto3==1.36.4
-
 # Telegram
 httpx==0.28.1
 

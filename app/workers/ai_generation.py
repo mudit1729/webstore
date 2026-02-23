@@ -47,8 +47,11 @@ def generate_ai_image(product_id, image_id, original_storage_key, version):
                 logger.error("Product %d not found", product_id)
                 return
 
-            # Download original image from S3
-            original_bytes = storage_service.download(original_storage_key)
+            # Download original image from DB
+            original = product.images.filter_by(type="ORIGINAL", status="READY").first()
+            if not original or not original.image_data:
+                raise ValueError("Original image not found in database")
+            original_bytes = original.image_data
 
             # Generate AI image
             logger.info(
@@ -56,13 +59,12 @@ def generate_ai_image(product_id, image_id, original_storage_key, version):
             )
             ai_bytes = ai_service.generate_image(original_bytes)
 
-            # Upload to S3 (private until approved)
-            storage_service.upload(
-                image.storage_key, ai_bytes, private=True
-            )
+            # Store AI image bytes in database
+            image.image_data = ai_bytes
 
-            # Update image record
-            image.url = storage_service.get_signed_url(image.storage_key)
+            # Update image record with URL
+            app_url = app.config.get("APP_URL", "").rstrip("/")
+            image.url = f"{app_url}/img/{image.id}"
             image.status = "READY"
             db.session.commit()
 
