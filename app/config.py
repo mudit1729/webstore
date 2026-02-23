@@ -45,6 +45,12 @@ class Config:
     # App
     APP_URL = os.environ.get("APP_URL", "http://localhost:5000")
 
+    # Security / request hardening
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = False
+    MAX_CONTENT_LENGTH = 12 * 1024 * 1024  # 12 MB
+
     # Defaults for settings seed
     DEFAULT_USD_FX_RATE = os.environ.get("DEFAULT_USD_FX_RATE", "83.00")
     DEFAULT_WHATSAPP_NUMBER = os.environ.get(
@@ -66,6 +72,7 @@ class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_ECHO = False
     PREFERRED_URL_SCHEME = "https"
+    SESSION_COOKIE_SECURE = True
 
     @classmethod
     def init_app(cls, app):
@@ -77,6 +84,9 @@ class ProductionConfig(Config):
         )
         assert app.config["TELEGRAM_BOT_TOKEN"], (
             "TELEGRAM_BOT_TOKEN must be set"
+        )
+        assert app.config["TELEGRAM_WEBHOOK_SECRET"], (
+            "TELEGRAM_WEBHOOK_SECRET must be set"
         )
 
         # Stream logs to stdout for Railway

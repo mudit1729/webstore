@@ -1,4 +1,5 @@
 import logging
+import hmac
 from flask import request, current_app
 from app.blueprints.telegram import telegram_bp
 from app.blueprints.telegram.handlers import handle_message, handle_callback_query
@@ -16,13 +17,14 @@ def webhook(token):
     - Sender must be in TELEGRAM_ADMIN_IDS allowlist
     """
     # Verify token in URL
-    if token != current_app.config["TELEGRAM_BOT_TOKEN"]:
+    expected_token = current_app.config["TELEGRAM_BOT_TOKEN"]
+    if not expected_token or not hmac.compare_digest(token, expected_token):
         return "", 403
 
     # Verify secret header
     secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
     expected_secret = current_app.config["TELEGRAM_WEBHOOK_SECRET"]
-    if expected_secret and secret != expected_secret:
+    if expected_secret and not hmac.compare_digest(secret, expected_secret):
         logger.warning("Invalid webhook secret header")
         return "", 403
 

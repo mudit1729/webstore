@@ -1,4 +1,6 @@
 """Tests for database models."""
+import pytest
+
 from app.models.product import Product
 from app.models.variant import VariantOption
 from app.models.image import Image
@@ -67,3 +69,16 @@ def test_settings(db):
     Settings.set("test_key", "test_value")
     assert Settings.get("test_key") == "test_value"
     assert Settings.get("missing_key", "default") == "default"
+
+
+def test_instagram_post_urls_are_normalized(db):
+    Settings.set("instagram_posts", "[]")
+    posts = Settings.add_instagram_post(
+        "https://instagram.com/p/ABC123/?utm_source=foo"
+    )
+    assert posts == ["https://www.instagram.com/p/ABC123"]
+
+
+def test_instagram_post_urls_reject_invalid_schemes(db):
+    with pytest.raises(ValueError):
+        Settings.add_instagram_post("javascript:alert(1)")

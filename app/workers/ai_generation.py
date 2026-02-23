@@ -1,6 +1,7 @@
 """RQ worker job: generate AI hero image for a product."""
 import logging
 from app import create_app
+from flask import current_app, has_app_context
 from app.extensions import db, redis_client
 from app.models.product import Product
 from app.models.image import Image
@@ -10,8 +11,21 @@ from app.blueprints.telegram.keyboards import approval_keyboard, fallback_keyboa
 
 logger = logging.getLogger(__name__)
 
-# Create app context for worker
-app = create_app()
+_worker_app = None
+
+
+def _get_app():
+    """Return an app instance for worker execution.
+
+    Reuse the current app when already inside an app context (tests/CLI),
+    otherwise lazily create the worker app once.
+    """
+    global _worker_app
+    if has_app_context():
+        return current_app._get_current_object()
+    if _worker_app is None:
+        _worker_app = create_app()
+    return _worker_app
 
 
 def generate_ai_image(product_id, image_id, original_storage_key, version):
@@ -23,6 +37,7 @@ def generate_ai_image(product_id, image_id, original_storage_key, version):
     Idempotency: checks image status before proceeding.
     Distributed lock: prevents duplicate work on the same image.
     """
+    app = _get_app()
     with app.app_context():
         image = db.session.get(Image, image_id)
         if not image:

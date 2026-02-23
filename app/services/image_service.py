@@ -4,6 +4,7 @@ from PIL import Image as PILImage
 
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_IMAGE_PIXELS = 40_000_000  # prevent decompression-bomb style inputs
 
 
 def validate_image(image_bytes):
@@ -31,6 +32,9 @@ def validate_image(image_bytes):
 
     # Re-open (verify() closes the file) and re-encode to strip EXIF
     img = PILImage.open(io.BytesIO(image_bytes))
+    width, height = img.size
+    if width <= 0 or height <= 0 or (width * height) > MAX_IMAGE_PIXELS:
+        raise ValueError("Image dimensions are too large")
     if img.mode not in ("RGB", "L"):
         img = img.convert("RGB")
 
