@@ -56,35 +56,33 @@ def parse_caption(caption):
         if not line:
             continue
 
-        if line.lower().startswith("title:"):
-            data["title"] = line.split(":", 1)[1].strip()
-        elif line.lower().startswith("price:"):
-            price_str = line.split(":", 1)[1].strip()
-            price_str = re.sub(r"[^\d]", "", price_str)
+        # Match "Key : Value" or "Key: Value" (flexible spacing around colon)
+        m = re.match(r"^(\w+)\s*:\s*(.*)", line)
+        if not m:
+            continue
+
+        key = m.group(1).lower()
+        value = m.group(2).strip()
+
+        if key == "title":
+            data["title"] = value
+        elif key == "price":
+            price_str = re.sub(r"[^\d]", "", value)
             data["price"] = int(price_str) if price_str else 0
-        elif line.lower().startswith("category:") or line.lower().startswith(
-            "categories:"
-        ):
-            cats = line.split(":", 1)[1].strip()
-            data["categories"] = [c.strip().lower() for c in cats.split(",") if c.strip()]
-        elif line.lower().startswith("tag:") or line.lower().startswith("tags:"):
-            tags = line.split(":", 1)[1].strip()
-            data["tags"] = [t.strip().lower() for t in tags.split(",") if t.strip()]
-        elif line.lower().startswith("variant:") or line.lower().startswith(
-            "variants:"
-        ):
-            variants_str = line.split(":", 1)[1].strip()
-            for part in variants_str.split(";"):
+        elif key in ("category", "categories"):
+            data["categories"] = [c.strip().lower() for c in value.split(",") if c.strip()]
+        elif key in ("tag", "tags"):
+            data["tags"] = [t.strip().lower() for t in value.split(",") if t.strip()]
+        elif key in ("variant", "variants"):
+            for part in value.split(";"):
                 part = part.strip()
                 if ":" in part:
                     vtype, vvalue = part.split(":", 1)
                     data["variants"].append(
                         {"type": vtype.strip(), "value": vvalue.strip()}
                     )
-        elif line.lower().startswith("description:") or line.lower().startswith(
-            "desc:"
-        ):
-            data["description"] = line.split(":", 1)[1].strip()
+        elif key in ("description", "desc"):
+            data["description"] = value
 
     return data
 
