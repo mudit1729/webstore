@@ -102,9 +102,7 @@ def _handle_photo(message, chat_id, user_id):
         telegram_service.send_message(chat_id, f"Image error: {e}")
         return
 
-    # Upload original to S3
-    # Use a temporary dress_id placeholder — will be replaced
-    # Actually, create the product first to get dress_id
+    # Create the product draft
     product, ai_image = product_service.create_draft(
         metadata=metadata,
         original_storage_key="",  # placeholder
@@ -113,39 +111,57 @@ def _handle_photo(message, chat_id, user_id):
         admin_id=user_id,
     )
 
-    # Now upload with real dress_id
+    # Store image bytes in original image record (DB storage)
     storage_key = f"originals/{product.dress_id}/v1.jpg"
-    storage_service.upload(storage_key, image_bytes, private=True)
-
-    signed_url = storage_service.get_signed_url(storage_key)
-
-    # Update the original image record
     original = product.images.filter_by(type="ORIGINAL").first()
     original.storage_key = storage_key
-    original.url = signed_url
+    original.image_data = image_bytes
+    original.status = "READY"
 
-    # Update AI image storage key
-    ai_image.storage_key = f"ai/{product.dress_id}/v1.jpg"
-    db.session.commit()
+    app_url = current_app.config.get("APP_URL", "").rstrip("/")
+    original.url = f"{app_url}/img/{original.id}"
 
-    # Enqueue AI generation
-    task_queue.enqueue(
-        "app.workers.ai_generation.generate_ai_image",
-        product_id=product.id,
-        image_id=ai_image.id,
-        original_storage_key=storage_key,
-        version=1,
-        job_id=f"ai_gen_{ai_image.id}",
-        retry=Retry(max=3, interval=[30, 120, 300]),
-    )
+    # Check if AI generation is available (Gemini key + Redis)
+    gemini_key = current_app.config.get("GEMINI_API_KEY", "")
+    has_ai = bool(gemini_key and task_queue)
 
-    telegram_service.send_message(
-        chat_id,
-        f"Draft created: {product.dress_id}\n"
-        f"Title: {product.title}\n"
-        f"Price: INR {metadata['price']:,}\n\n"
-        f"AI image is being generated...",
-    )
+    if has_ai:
+        # Set up AI image record and enqueue generation
+        ai_image.storage_key = f"ai/{product.dress_id}/v1.jpg"
+        db.session.commit()
+
+        task_queue.enqueue(
+            "app.workers.ai_generation.generate_ai_image",
+            product_id=product.id,
+            image_id=ai_image.id,
+            original_storage_key=storage_key,
+            version=1,
+            job_id=f"ai_gen_{ai_image.id}",
+            retry=Retry(max=3, interval=[30, 120, 300]),
+        )
+
+        telegram_service.send_message(
+            chat_id,
+            f"Draft created: {product.dress_id}\n"
+            f"Title: {product.title}\n"
+            f"Price: INR {metadata['price']:,}\n\n"
+            f"AI image is being generated...",
+        )
+    else:
+        # No AI — delete the placeholder AI image and publish directly
+        if ai_image:
+            db.session.delete(ai_image)
+
+        product.status = "PUBLISHED"
+        db.session.commit()
+
+        telegram_service.send_message(
+            chat_id,
+            f"Published: {product.dress_id}\n"
+            f"Title: {product.title}\n"
+            f"Price: INR {metadata['price']:,}\n\n"
+            f"Live on the website now!",
+        )
 
 
 def _handle_set_rate(text, chat_id, user_id):
@@ -392,17 +408,16 @@ def _cb_approve(product, admin_id, cb_id):
         telegram_service.answer_callback_query(cb_id, "Not in DRAFT state")
         return
 
-    # Make images public
+    # Update URLs to use Flask endpoint (DB-backed)
+    app_url = current_app.config.get("APP_URL", "").rstrip("/")
     original = product.original_image
     ai_img = product.ai_image
 
     if original:
-        storage_service.make_public(original.storage_key)
-        original.url = storage_service.get_public_url(original.storage_key)
+        original.url = f"{app_url}/img/{original.id}"
 
     if ai_img:
-        storage_service.make_public(ai_img.storage_key)
-        ai_img.url = storage_service.get_public_url(ai_img.storage_key)
+        ai_img.url = f"{app_url}/img/{ai_img.id}"
 
     product_service.publish_product(
         product.id, admin_id, ai_version=ai_img.version if ai_img else None
@@ -487,10 +502,10 @@ def _cb_publish_original(product, admin_id, cb_id):
         telegram_service.answer_callback_query(cb_id, "Not in DRAFT state")
         return
 
+    app_url = current_app.config.get("APP_URL", "").rstrip("/")
     original = product.original_image
     if original:
-        storage_service.make_public(original.storage_key)
-        original.url = storage_service.get_public_url(original.storage_key)
+        original.url = f"{app_url}/img/{original.id}"
 
     product_service.publish_original_only(product.id, admin_id)
 
@@ -521,12 +536,12 @@ def _cb_discard(product, admin_id, cb_id):
 
     storage_keys = product_service.discard_draft(product.id, admin_id)
 
-    # Clean up S3
+    # Clean up stored image data
     if storage_keys:
         try:
             storage_service.delete_many(storage_keys)
         except Exception:
-            logger.warning("Failed to delete S3 objects for %s", dress_id)
+            logger.warning("Failed to delete image data for %s", dress_id)
 
     if message_id:
         try:

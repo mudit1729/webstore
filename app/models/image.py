@@ -14,9 +14,10 @@ class Image(db.Model):
     )
     type = db.Column(db.String(20), nullable=False)  # ORIGINAL, AI_GENERATED
     version = db.Column(db.Integer, nullable=False, default=1)
-    storage_key = db.Column(db.String(512), nullable=False)
+    storage_key = db.Column(db.String(512), nullable=False, default="")
     url = db.Column(db.String(1024))
     status = db.Column(db.String(20), nullable=False, default="PENDING")
+    image_data = db.Column(db.LargeBinary)  # JPEG bytes stored in Postgres
     created_at = db.Column(
         db.DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

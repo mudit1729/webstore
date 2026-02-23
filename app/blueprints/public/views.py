@@ -1,9 +1,10 @@
 """Public-facing catalog and product pages."""
 from urllib.parse import quote
-from flask import render_template, request, abort
+from flask import render_template, request, abort, Response, make_response
 from app.blueprints.public import public_bp
 from app.services.product_service import get_published_products, get_product_by_dress_id
 from app.models.settings import Settings
+from app.models.image import Image
 
 
 @public_bp.route("/")
@@ -77,6 +78,19 @@ def product_detail(dress_id):
         whatsapp_link=whatsapp_link,
         page_url=page_url,
     )
+
+
+@public_bp.route("/img/<int:image_id>")
+def serve_image(image_id):
+    """Serve image bytes from PostgreSQL."""
+    image = Image.query.get_or_404(image_id)
+    if not image.image_data:
+        abort(404)
+
+    response = make_response(image.image_data)
+    response.headers["Content-Type"] = "image/jpeg"
+    response.headers["Cache-Control"] = "public, max-age=86400"  # 1 day
+    return response
 
 
 def build_whatsapp_link(phone, dress_id, variant_text, page_url):

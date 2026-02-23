@@ -1,85 +1,72 @@
-import boto3
-from botocore.config import Config as BotoConfig
+"""Image storage service — stores image bytes in PostgreSQL.
+
+Replaces the previous S3-based storage. All images are stored as BYTEA
+in the Image model's `image_data` column and served via Flask endpoint.
+"""
 from flask import current_app
-
-
-def _get_client():
-    return boto3.client(
-        "s3",
-        endpoint_url=current_app.config["S3_ENDPOINT_URL"] or None,
-        aws_access_key_id=current_app.config["S3_ACCESS_KEY"],
-        aws_secret_access_key=current_app.config["S3_SECRET_KEY"],
-        region_name=current_app.config["S3_REGION"],
-        config=BotoConfig(signature_version="s3v4"),
-    )
+from app.extensions import db
+from app.models.image import Image
 
 
 def upload(storage_key, data, content_type="image/jpeg", private=True):
-    """Upload bytes to S3."""
-    client = _get_client()
-    bucket = current_app.config["S3_BUCKET_NAME"]
-    acl = "private" if private else "public-read"
+    """Store image bytes in the database.
 
-    client.put_object(
-        Bucket=bucket,
-        Key=storage_key,
-        Body=data,
-        ContentType=content_type,
-        ACL=acl,
-    )
+    Finds the Image record by storage_key and saves the bytes.
+    """
+    image = Image.query.filter_by(storage_key=storage_key).first()
+    if image:
+        image.image_data = data
+        db.session.commit()
 
 
 def download(storage_key):
-    """Download file bytes from S3."""
-    client = _get_client()
-    bucket = current_app.config["S3_BUCKET_NAME"]
-    response = client.get_object(Bucket=bucket, Key=storage_key)
-    return response["Body"].read()
+    """Retrieve image bytes from the database."""
+    image = Image.query.filter_by(storage_key=storage_key).first()
+    if image and image.image_data:
+        return image.image_data
+    raise FileNotFoundError(f"Image not found: {storage_key}")
+
+
+def get_image_url(image_id):
+    """Return the Flask endpoint URL for an image."""
+    app_url = current_app.config.get("APP_URL", "").rstrip("/")
+    return f"{app_url}/img/{image_id}"
 
 
 def get_signed_url(storage_key, expires_in=900):
-    """Generate a pre-signed URL (default 15 min)."""
-    client = _get_client()
-    bucket = current_app.config["S3_BUCKET_NAME"]
-    return client.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": bucket, "Key": storage_key},
-        ExpiresIn=expires_in,
-    )
+    """Return URL to serve this image (no signing needed with DB storage)."""
+    image = Image.query.filter_by(storage_key=storage_key).first()
+    if image:
+        return get_image_url(image.id)
+    return ""
 
 
 def get_public_url(storage_key):
-    """Return the public CDN URL for a storage key."""
-    base = current_app.config["S3_PUBLIC_URL"].rstrip("/")
-    return f"{base}/{storage_key}"
+    """Return the public URL for an image."""
+    image = Image.query.filter_by(storage_key=storage_key).first()
+    if image:
+        return get_image_url(image.id)
+    return ""
 
 
 def make_public(storage_key):
-    """Change an object's ACL to public-read."""
-    client = _get_client()
-    bucket = current_app.config["S3_BUCKET_NAME"]
-    client.put_object_acl(
-        Bucket=bucket,
-        Key=storage_key,
-        ACL="public-read",
-    )
+    """No-op — all images served via Flask are public by endpoint."""
+    pass
 
 
 def delete(storage_key):
-    """Delete an object from S3."""
-    client = _get_client()
-    bucket = current_app.config["S3_BUCKET_NAME"]
-    client.delete_object(Bucket=bucket, Key=storage_key)
+    """Delete image data for a storage key."""
+    image = Image.query.filter_by(storage_key=storage_key).first()
+    if image:
+        image.image_data = None
+        db.session.commit()
 
 
 def delete_many(storage_keys):
-    """Delete multiple objects from S3."""
+    """Delete image data for multiple storage keys."""
     if not storage_keys:
         return
-    client = _get_client()
-    bucket = current_app.config["S3_BUCKET_NAME"]
-    objects = [{"Key": k} for k in storage_keys]
-    client.delete_objects(
-        Bucket=bucket,
-        Delete={"Objects": objects},
-    )
+    images = Image.query.filter(Image.storage_key.in_(storage_keys)).all()
+    for image in images:
+        image.image_data = None
+    db.session.commit()
