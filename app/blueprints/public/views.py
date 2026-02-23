@@ -9,22 +9,11 @@ from app.models.image import Image
 
 @public_bp.route("/")
 def catalog():
-    """Catalog page with filters."""
-    category = request.args.get("category")
-    min_price = request.args.get("min_price", type=int)
-    max_price = request.args.get("max_price", type=int)
-    color = request.args.get("color")
-    size = request.args.get("size")
-    sort = request.args.get("sort", "newest")
+    """Catalog page — newest first, no filters for now."""
     page = request.args.get("page", 1, type=int)
 
     pagination = get_published_products(
-        category=category,
-        min_price=min_price,
-        max_price=max_price,
-        color=color,
-        size=size,
-        sort=sort,
+        sort="newest",
         page=page,
         per_page=24,
     )
@@ -38,14 +27,6 @@ def catalog():
         pagination=pagination,
         usd_rate=usd_rate,
         instagram_posts=instagram_posts,
-        filters={
-            "category": category,
-            "min_price": min_price,
-            "max_price": max_price,
-            "color": color,
-            "size": size,
-            "sort": sort,
-        },
     )
 
 
