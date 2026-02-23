@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Collection — Rangoli Boutique{% endblock %}
+
+{% block content %}
+<section class="catalog container">
+
+    {# Page heading #}
+    <div class="catalog-header">
+        <h1 class="catalog-title">Our Collection</h1>
+        <p class="catalog-subtitle">Each piece is one of a kind, handpicked for you</p>
+    </div>
+
+    {# Filter bar — horizontal, minimal #}
+    <form method="get" action="/" class="filter-bar">
+        <div class="filter-row">
+            <div class="filter-item">
+                <label for="category">Category</label>
+                <select name="category" id="category">
+                    <option value="">All</option>
+                    {% for cat in ['saree', 'lehenga', 'suit', 'kurti', 'gown', 'dupatta'] %}
+                    <option value="{{ cat }}" {% if filters.category == cat %}selected{% endif %}>{{ cat|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item">
+                <label for="color">Color</label>
+                <select name="color" id="color">
+                    <option value="">All</option>
+                    {% for c in ['red', 'blue', 'green', 'pink', 'yellow', 'black', 'white', 'gold', 'maroon', 'purple'] %}
+                    <option value="{{ c }}" {% if filters.color == c %}selected{% endif %}>{{ c|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-item filter-item--price">
+                <label>Price (INR)</label>
+                <div class="price-range-inputs">
+                    <input type="number" name="min_price" value="{{ filters.min_price or '' }}" placeholder="Min" min="0">
+                    <span class="range-sep">&ndash;</span>
+                    <input type="number" name="max_price" value="{{ filters.max_price or '' }}" placeholder="Max" min="0">
+                </div>
+            </div>
+            <div class="filter-item">
+                <label for="size">Size</label>
+                <input type="text" name="size" id="size" value="{{ filters.size or '' }}" placeholder="e.g. Free Size">
+            </div>
+            <div class="filter-item">
+                <label for="sort">Sort</label>
+                <select name="sort" id="sort">
+                    <option value="newest" {% if filters.sort == 'newest' %}selected{% endif %}>Newest First</option>
+                    <option value="price_asc" {% if filters.sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price_desc" {% if filters.sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-filter">Apply</button>
+                {% if filters.category or filters.color or filters.min_price or filters.max_price or filters.size %}
+                <a href="/" class="btn-clear-link">Clear</a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+
+    {# Product grid #}
+    <div class="product-grid">
+        {% if not products %}
+        <div class="empty-state">
+            <p class="empty-icon" aria-hidden="true">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </p>
+            <p class="empty-text">No pieces found</p>
+            <p class="empty-hint">Try adjusting your filters or <a href="/">view all</a></p>
+        </div>
+        {% endif %}
+
+        {% for product in products %}
+        <a href="/d/{{ product.dress_id }}" class="product-card">
+            {% set img = product.ai_image or product.original_image %}
+            <div class="card-image">
+                {% if img %}
+                <img src="{{ img.url }}" alt="{{ product.title }}" loading="lazy">
+                {% else %}
+                <div class="card-image-placeholder"></div>
+                {% endif %}
+                {% if product.status == 'SOLD_OUT' %}
+                <span class="badge-sold">Sold</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="card-top">
+                    <span class="card-id">{{ product.dress_id }}</span>
+                    {% if loop.index <= 3 and filters.sort == 'newest' %}
+                    <span class="card-new">New</span>
+                    {% endif %}
+                </div>
+                <h3 class="card-title">{{ product.title }}</h3>
+                <div class="card-pricing">
+                    <span class="card-price">&#8377;{{ "{:,.0f}".format(product.price_inr_display) }}</span>
+                    <span class="card-usd">~${{ product.price_usd_display(usd_rate) }}</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {# Pagination #}
+    {% if pagination.pages > 1 %}
+    <nav class="pagination" aria-label="Page navigation">
+        {% if pagination.has_prev %}
+        <a href="?page={{ pagination.prev_num }}&category={{ filters.category or '' }}&color={{ filters.color or '' }}&sort={{ filters.sort }}" class="page-btn">&larr; Previous</a>
+        {% else %}
+        <span class="page-btn page-btn--disabled">&larr; Previous</span>
+        {% endif %}
+
+        <span class="page-info">{{ pagination.page }} / {{ pagination.pages }}</span>
+
+        {% if pagination.has_next %}
+        <a href="?page={{ pagination.next_num }}&category={{ filters.category or '' }}&color={{ filters.color or '' }}&sort={{ filters.sort }}" class="page-btn">Next &rarr;</a>
+        {% else %}
+        <span class="page-btn page-btn--disabled">Next &rarr;</span>
+        {% endif %}
+    </nav>
+    {% endif %}
+
+</section>
+{% endblock %}
