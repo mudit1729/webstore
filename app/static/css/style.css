@@ -789,14 +789,14 @@ button { font-family: inherit; cursor: pointer; }
    Instagram Section
    ========================================================================== */
 .insta-section {
-    margin-top: 4rem;
-    padding-top: 3rem;
+    margin-top: 5rem;
+    padding: 3.5rem 0 2rem;
     border-top: 1px solid var(--sand);
 }
 
 .insta-header {
     text-align: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 3rem;
 }
 
 .insta-ornament {
@@ -828,10 +828,11 @@ button { font-family: inherit; cursor: pointer; }
 .insta-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    gap: 2rem;
     align-items: start;
     max-width: 1100px;
     margin: 0 auto;
+    padding: 0 1rem;
 }
 
 .insta-embed-card {
@@ -841,6 +842,13 @@ button { font-family: inherit; cursor: pointer; }
     overflow: hidden;
     min-width: 0;
     max-width: 100%;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.insta-embed-card:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
 }
 
 /* Force Instagram embeds to fit within grid columns */
@@ -851,19 +859,23 @@ button { font-family: inherit; cursor: pointer; }
     min-width: 0 !important;
     width: 100% !important;
     margin: 0 !important;
+    border: none !important;
     border-radius: var(--radius-lg) !important;
+    box-shadow: none !important;
 }
 
 .insta-embed-card blockquote {
     max-width: 100% !important;
     min-width: 0 !important;
     width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .insta-cta {
     text-align: center;
-    margin-top: 2.5rem;
-    margin-bottom: 1rem;
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
 }
 
 .insta-follow-btn {
@@ -991,6 +1003,8 @@ button { font-family: inherit; cursor: pointer; }
 
     .pdp-title { font-size: 1.6rem; }
     .pdp-price-inr { font-size: 1.5rem; }
+
+    .insta-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
 }
 
 @media (max-width: 480px) {
