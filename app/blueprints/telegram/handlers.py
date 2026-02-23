@@ -241,7 +241,7 @@ def _handle_edit_price(text, chat_id, user_id):
 def _handle_add_insta(text, chat_id, user_id):
     """Add Instagram post to catalog. Usage: /addinsta https://www.instagram.com/p/xxx/"""
     parts = text.split(maxsplit=1)
-    if len(parts) < 2 or "instagram.com" not in parts[1]:
+    if len(parts) < 2:
         telegram_service.send_message(
             chat_id,
             "Usage: /addinsta https://www.instagram.com/p/ABC123/\n"
@@ -250,7 +250,12 @@ def _handle_add_insta(text, chat_id, user_id):
         return
 
     url = parts[1].strip()
-    posts = Settings.add_instagram_post(url)
+    try:
+        posts = Settings.add_instagram_post(url)
+    except ValueError as e:
+        telegram_service.send_message(chat_id, f"Invalid Instagram URL: {e}")
+        return
+
     db.session.add(
         AuditLog(admin_id=user_id, action="ADD_INSTAGRAM", payload={"url": url})
     )

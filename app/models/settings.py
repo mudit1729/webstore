@@ -1,4 +1,6 @@
 from datetime import datetime, timezone
+import re
+from urllib.parse import urlsplit
 from app.extensions import db
 
 
@@ -48,13 +50,40 @@ class Settings(db.Model):
             return []
 
     @staticmethod
+    def _normalize_instagram_post_url(url):
+        """Validate and normalize an Instagram post/reel URL."""
+        if not url or not isinstance(url, str):
+            raise ValueError("Instagram URL is required.")
+
+        candidate = url.strip()
+        parts = urlsplit(candidate)
+
+        if parts.scheme.lower() != "https":
+            raise ValueError("Instagram URL must use https://")
+        if parts.username or parts.password:
+            raise ValueError("Instagram URL must not include credentials.")
+
+        host = (parts.hostname or "").lower()
+        allowed_hosts = {"instagram.com", "www.instagram.com", "m.instagram.com"}
+        if host not in allowed_hosts:
+            raise ValueError("URL must be an instagram.com post or reel link.")
+
+        path_parts = [p for p in parts.path.split("/") if p]
+        if len(path_parts) != 2 or path_parts[0] not in {"p", "reel"}:
+            raise ValueError("Use a direct Instagram /p/ or /reel/ URL.")
+
+        slug = path_parts[1]
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", slug):
+            raise ValueError("Invalid Instagram post URL.")
+
+        return f"https://www.instagram.com/{path_parts[0]}/{slug}"
+
+    @staticmethod
     def add_instagram_post(url):
         """Add an Instagram post URL. Max 12 posts."""
         import json
         posts = Settings.get_instagram_posts()
-        url = url.strip().rstrip("/")
-        if "?" in url:
-            url = url.split("?")[0]
+        url = Settings._normalize_instagram_post_url(url)
         if url not in posts:
             posts.insert(0, url)  # newest first
             posts = posts[:12]

@@ -9,7 +9,14 @@ def create_app(config_name=None):
     flask_app = Flask(__name__)
 
     if config_name is None:
-        config_name = os.environ.get("FLASK_ENV", "development")
+        config_name = os.environ.get("FLASK_ENV")
+        if not config_name:
+            # Default to production on managed platforms to avoid accidental
+            # debug mode/weak defaults when env selection is omitted.
+            if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("PORT"):
+                config_name = "production"
+            else:
+                config_name = "development"
 
     from app.config import config_map
 
@@ -62,7 +69,8 @@ def create_app(config_name=None):
             db.session.execute(db.text("SELECT 1"))
             checks["db"] = "ok"
         except Exception as e:
-            checks["db"] = f"error: {e}"
+            flask_app.logger.exception("Health check DB probe failed")
+            checks["db"] = "error"
             checks["status"] = "degraded"
         try:
             if redis_client:
@@ -71,7 +79,8 @@ def create_app(config_name=None):
             else:
                 checks["redis"] = "not configured"
         except Exception as e:
-            checks["redis"] = f"error: {e}"
+            flask_app.logger.exception("Health check Redis probe failed")
+            checks["redis"] = "error"
             checks["status"] = "degraded"
         status_code = 200 if checks["status"] == "ok" else 503
         return checks, status_code
