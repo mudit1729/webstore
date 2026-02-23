@@ -69,6 +69,16 @@ def register_cli(app):
         db.session.commit()
         click.echo(f"Seeded {len(demo_products)} demo products.")
 
+        # Advance the dress_id sequence past seeded data so new products
+        # don't collide with demo IDs (D-1001 through D-1008)
+        db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
+        if "postgresql" in db_uri:
+            db.session.execute(
+                db.text("SELECT setval('dress_id_seq', 1009, false)")
+            )
+            db.session.commit()
+            click.echo("Advanced dress_id_seq to 1009.")
+
         # Seed Instagram posts
         if not Settings.get_instagram_posts():
             insta_posts = [
