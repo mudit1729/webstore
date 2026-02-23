@@ -18,6 +18,15 @@ def register_cli(app):
                     "CREATE SEQUENCE IF NOT EXISTS dress_id_seq START WITH 1001"
                 )
             )
+            # Always sync sequence past any existing products to avoid conflicts
+            db.session.execute(
+                db.text(
+                    "SELECT setval('dress_id_seq', GREATEST("
+                    "  (SELECT COALESCE(MAX(CAST(SUBSTRING(dress_id FROM 3) AS INTEGER)), 1000) FROM products),"
+                    "  (SELECT last_value FROM dress_id_seq)"
+                    ") + 1, false)"
+                )
+            )
             db.session.commit()
 
         # Seed default settings
