@@ -51,6 +51,12 @@ def handle_message(message):
         _handle_unhide(text, chat_id, user_id)
     elif text.startswith("/editprice"):
         _handle_edit_price(text, chat_id, user_id)
+    elif text.startswith("/addinsta"):
+        _handle_add_insta(text, chat_id, user_id)
+    elif text.startswith("/removeinsta"):
+        _handle_remove_insta(text, chat_id, user_id)
+    elif text.startswith("/listinsta"):
+        _handle_list_insta(chat_id)
     elif text.startswith("/stats"):
         _handle_stats(chat_id)
     elif text.startswith("/help") or text.startswith("/start"):
@@ -244,6 +250,66 @@ def _handle_edit_price(text, chat_id, user_id):
         telegram_service.send_message(chat_id, f"{dress_id} not found.")
 
 
+def _handle_add_insta(text, chat_id, user_id):
+    """Add Instagram post to catalog. Usage: /addinsta https://www.instagram.com/p/xxx/"""
+    parts = text.split(maxsplit=1)
+    if len(parts) < 2 or "instagram.com" not in parts[1]:
+        telegram_service.send_message(
+            chat_id,
+            "Usage: /addinsta https://www.instagram.com/p/ABC123/\n"
+            "Also works with /reel/ URLs.",
+        )
+        return
+
+    url = parts[1].strip()
+    posts = Settings.add_instagram_post(url)
+    db.session.add(
+        AuditLog(admin_id=user_id, action="ADD_INSTAGRAM", payload={"url": url})
+    )
+    db.session.commit()
+    telegram_service.send_message(
+        chat_id, f"Instagram post added ({len(posts)} total on catalog)."
+    )
+
+
+def _handle_remove_insta(text, chat_id, user_id):
+    """Remove Instagram post. Usage: /removeinsta 1  or  /removeinsta <url>"""
+    parts = text.split(maxsplit=1)
+    if len(parts) < 2:
+        telegram_service.send_message(
+            chat_id, "Usage: /removeinsta 1  (number from /listinsta)"
+        )
+        return
+
+    removed = Settings.remove_instagram_post(parts[1])
+    if removed:
+        db.session.add(
+            AuditLog(
+                admin_id=user_id, action="REMOVE_INSTAGRAM", payload={"url": removed}
+            )
+        )
+        db.session.commit()
+        telegram_service.send_message(chat_id, f"Removed: {removed}")
+    else:
+        telegram_service.send_message(chat_id, "Post not found. Use /listinsta to see current posts.")
+
+
+def _handle_list_insta(chat_id):
+    """List all Instagram embeds on catalog."""
+    posts = Settings.get_instagram_posts()
+    if not posts:
+        telegram_service.send_message(
+            chat_id, "No Instagram posts on catalog.\nAdd with: /addinsta <url>"
+        )
+        return
+    lines = [f"  {i+1}. {url}" for i, url in enumerate(posts)]
+    telegram_service.send_message(
+        chat_id,
+        f"Instagram posts ({len(posts)}):\n" + "\n".join(lines)
+        + "\n\nRemove with: /removeinsta <number>",
+    )
+
+
 def _handle_stats(chat_id):
     stats = product_service.get_stats()
     lines = [f"  {status}: {count}" for status, count in sorted(stats.items())]
@@ -270,7 +336,10 @@ def _handle_help(chat_id):
         "  /unhide D-1042 — Show in catalog\n"
         "  /editprice D-1042 15000 — Change price\n"
         "  /setrate 83.50 — Set USD exchange rate\n"
-        "  /setwhatsapp 919876543210 — Set WhatsApp number\n"
+        "  /setwhatsapp 919876543210 — Set WhatsApp\n"
+        "  /addinsta <url> — Add Instagram post to catalog\n"
+        "  /removeinsta <#> — Remove Instagram post\n"
+        "  /listinsta — List Instagram posts\n"
         "  /stats — Product counts by status\n"
         "  /help — This message",
     )

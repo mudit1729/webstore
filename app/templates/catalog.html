@@ -103,6 +103,39 @@
         {% endfor %}
     </div>
 
+    {# Instagram Section #}
+    {% if instagram_posts %}
+    <section class="insta-section">
+        <div class="insta-header">
+            <div class="insta-ornament">&#10022;</div>
+            <h2 class="insta-title">Follow Our Journey</h2>
+            <p class="insta-subtitle">
+                <a href="https://www.instagram.com/rang_b2009/" target="_blank" rel="noopener" class="insta-handle">@rang_b2009</a>
+            </p>
+        </div>
+        <div class="insta-grid">
+            {% for post_url in instagram_posts %}
+            <a href="{{ post_url }}" target="_blank" rel="noopener" class="insta-card">
+                <div class="insta-card-gradient"></div>
+                <div class="insta-card-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                </div>
+                <div class="insta-card-body">
+                    <span class="insta-card-label">View on Instagram</span>
+                    <span class="insta-card-arrow">&rarr;</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        <div class="insta-cta">
+            <a href="https://www.instagram.com/rang_b2009/" target="_blank" rel="noopener" class="insta-follow-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                Follow on Instagram
+            </a>
+        </div>
+    </section>
+    {% endif %}
+
     {# Pagination #}
     {% if pagination.pages > 1 %}
     <nav class="pagination" aria-label="Page navigation">
