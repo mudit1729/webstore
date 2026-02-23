@@ -121,47 +121,20 @@ def _handle_photo(message, chat_id, user_id):
     app_url = current_app.config.get("APP_URL", "").rstrip("/")
     original.url = f"{app_url}/img/{original.id}"
 
-    # Check if AI generation is available (Gemini key + Redis)
-    gemini_key = current_app.config.get("GEMINI_API_KEY", "")
-    has_ai = bool(gemini_key and task_queue)
+    # Delete the AI image placeholder — publish with original directly
+    if ai_image:
+        db.session.delete(ai_image)
 
-    if has_ai:
-        # Set up AI image record and enqueue generation
-        ai_image.storage_key = f"ai/{product.dress_id}/v1.jpg"
-        db.session.commit()
+    product.status = "PUBLISHED"
+    db.session.commit()
 
-        task_queue.enqueue(
-            "app.workers.ai_generation.generate_ai_image",
-            product_id=product.id,
-            image_id=ai_image.id,
-            original_storage_key=storage_key,
-            version=1,
-            job_id=f"ai_gen_{ai_image.id}",
-            retry=Retry(max=3, interval=[30, 120, 300]),
-        )
-
-        telegram_service.send_message(
-            chat_id,
-            f"Draft created: {product.dress_id}\n"
-            f"Title: {product.title}\n"
-            f"Price: INR {metadata['price']:,}\n\n"
-            f"AI image is being generated...",
-        )
-    else:
-        # No AI — delete the placeholder AI image and publish directly
-        if ai_image:
-            db.session.delete(ai_image)
-
-        product.status = "PUBLISHED"
-        db.session.commit()
-
-        telegram_service.send_message(
-            chat_id,
-            f"Published: {product.dress_id}\n"
-            f"Title: {product.title}\n"
-            f"Price: INR {metadata['price']:,}\n\n"
-            f"Live on the website now!",
-        )
+    telegram_service.send_message(
+        chat_id,
+        f"✅ Published: {product.dress_id}\n"
+        f"Title: {product.title}\n"
+        f"Price: INR {metadata['price']:,}\n\n"
+        f"Live on the website now!",
+    )
 
 
 def _handle_set_rate(text, chat_id, user_id):
