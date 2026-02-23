@@ -37,5 +37,50 @@ class Settings(db.Model):
     def get_whatsapp_number():
         return Settings.get("whatsapp_number", "919876543210")
 
+    @staticmethod
+    def get_instagram_posts():
+        """Return list of Instagram post URLs."""
+        import json
+        raw = Settings.get("instagram_posts", "[]")
+        try:
+            return json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            return []
+
+    @staticmethod
+    def add_instagram_post(url):
+        """Add an Instagram post URL. Max 12 posts."""
+        import json
+        posts = Settings.get_instagram_posts()
+        url = url.strip().rstrip("/")
+        if "?" in url:
+            url = url.split("?")[0]
+        if url not in posts:
+            posts.insert(0, url)  # newest first
+            posts = posts[:12]
+            Settings.set("instagram_posts", json.dumps(posts))
+        return posts
+
+    @staticmethod
+    def remove_instagram_post(url_or_index):
+        """Remove by URL substring or 1-based index."""
+        import json
+        posts = Settings.get_instagram_posts()
+        try:
+            idx = int(url_or_index) - 1
+            if 0 <= idx < len(posts):
+                removed = posts.pop(idx)
+                Settings.set("instagram_posts", json.dumps(posts))
+                return removed
+        except (ValueError, TypeError):
+            pass
+        url_or_index = url_or_index.strip()
+        for i, p in enumerate(posts):
+            if url_or_index in p:
+                removed = posts.pop(i)
+                Settings.set("instagram_posts", json.dumps(posts))
+                return removed
+        return None
+
     def __repr__(self):
         return f"<Settings {self.key}={self.value}>"

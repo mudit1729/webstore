@@ -29,12 +29,14 @@ def catalog():
     )
 
     usd_rate = Settings.get_usd_rate()
+    instagram_posts = Settings.get_instagram_posts()
 
     return render_template(
         "catalog.html",
         products=pagination.items,
         pagination=pagination,
         usd_rate=usd_rate,
+        instagram_posts=instagram_posts,
         filters={
             "category": category,
             "min_price": min_price,
