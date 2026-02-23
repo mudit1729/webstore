@@ -789,14 +789,14 @@ button { font-family: inherit; cursor: pointer; }
    Instagram Section
    ========================================================================== */
 .insta-section {
-    margin-top: 3.5rem;
-    padding-top: 2.5rem;
+    margin-top: 4rem;
+    padding-top: 3rem;
     border-top: 1px solid var(--sand);
 }
 
 .insta-header {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
 }
 
 .insta-ornament {
@@ -827,81 +827,36 @@ button { font-family: inherit; cursor: pointer; }
 
 .insta-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
     align-items: start;
+    max-width: 1100px;
+    margin: 0 auto;
 }
 
-.insta-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    aspect-ratio: 1;
-    background: linear-gradient(145deg, #FBF0E6 0%, #F3E5D8 50%, #EDDED2 100%);
+.insta-embed-card {
+    background: var(--white);
     border: 1px solid var(--sand);
     border-radius: var(--radius-lg);
     overflow: hidden;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    text-decoration: none;
+    min-width: 0;
 }
 
-.insta-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(139, 90, 43, 0.12);
-    border-color: var(--burgundy);
+.insta-embed-card iframe {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    border-radius: var(--radius-lg) !important;
 }
 
-.insta-card-gradient {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4) 0%, transparent 60%);
-    pointer-events: none;
-}
-
-.insta-card-icon {
-    color: var(--burgundy);
-    opacity: 0.6;
-    margin-bottom: 0.75rem;
-    transition: opacity 0.3s;
-}
-
-.insta-card:hover .insta-card-icon { opacity: 1; }
-
-.insta-card-body {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.insta-card-label {
-    font-family: var(--font-body);
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    color: var(--mid);
-    transition: color 0.3s;
-}
-
-.insta-card:hover .insta-card-label { color: var(--burgundy); }
-
-.insta-card-arrow {
-    font-size: 0.8rem;
-    color: var(--mid);
-    transition: all 0.3s;
-    transform: translateX(0);
-}
-
-.insta-card:hover .insta-card-arrow {
-    color: var(--burgundy);
-    transform: translateX(3px);
+.insta-embed-card .instagram-media {
+    margin: 0 !important;
+    min-width: 0 !important;
 }
 
 .insta-cta {
     text-align: center;
-    margin-top: 2rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
 }
 
 .insta-follow-btn {
@@ -1046,6 +1001,6 @@ button { font-family: inherit; cursor: pointer; }
     .card-body { padding: 0.75rem 0.85rem 1rem; }
     .card-title { font-size: 1.05rem; }
 
-    .insta-grid { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+    .insta-grid { grid-template-columns: 1fr; gap: 1.5rem; }
     .insta-title { font-size: 1.4rem; }
 }
