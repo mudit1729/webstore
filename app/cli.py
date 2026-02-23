@@ -56,49 +56,24 @@ def register_cli(app):
 
     @app.cli.command("seed-demo")
     def seed_demo():
-        """Seed demo products and Instagram posts (idempotent)."""
+        """Seed Instagram posts and clean up imageless demo products."""
         import json
         from app.extensions import db
         from app.models.product import Product
+        from app.models.image import Image
         from app.models.settings import Settings
 
-        # Only seed if no products exist yet
-        if Product.query.first():
-            click.echo("Products already exist — skipping demo seed.")
-            return
-
-        demo_products = [
-            ("D-1001", "Red Banarasi Silk Saree", 1250000, ["saree"], ["red", "silk", "banarasi", "wedding"]),
-            ("D-1002", "Navy Blue Anarkali Suit", 850000, ["suit"], ["blue", "anarkali", "party"]),
-            ("D-1003", "Pink Georgette Lehenga", 2200000, ["lehenga"], ["pink", "georgette", "bridal"]),
-            ("D-1004", "Green Cotton Kurti", 220000, ["kurti"], ["green", "cotton", "casual"]),
-            ("D-1005", "Maroon Velvet Gown", 1800000, ["gown"], ["maroon", "velvet", "party"]),
-            ("D-1006", "Yellow Chanderi Saree", 650000, ["saree"], ["yellow", "chanderi"]),
-            ("D-1007", "White Chikankari Kurti", 350000, ["kurti"], ["white", "chikankari", "lucknow"]),
-            ("D-1008", "Gold Tissue Dupatta", 450000, ["dupatta"], ["gold", "tissue"]),
-        ]
-        for dress_id, title, price, cats, tags in demo_products:
-            p = Product(
-                dress_id=dress_id,
-                title=title,
-                price_inr=price,
-                categories=cats,
-                tags=tags,
-                status="PUBLISHED",
-            )
-            db.session.add(p)
-        db.session.commit()
-        click.echo(f"Seeded {len(demo_products)} demo products.")
-
-        # Advance the dress_id sequence past seeded data so new products
-        # don't collide with demo IDs (D-1001 through D-1008)
-        db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
-        if "postgresql" in db_uri:
-            db.session.execute(
-                db.text("SELECT setval('dress_id_seq', 1009, false)")
-            )
+        # Remove demo products that have no actual image data
+        empty_products = (
+            Product.query
+            .filter(~Product.images.any(Image.image_data.isnot(None)))
+            .all()
+        )
+        if empty_products:
+            for p in empty_products:
+                db.session.delete(p)
             db.session.commit()
-            click.echo("Advanced dress_id_seq to 1009.")
+            click.echo(f"Removed {len(empty_products)} products with no images.")
 
         # Seed Instagram posts
         if not Settings.get_instagram_posts():
