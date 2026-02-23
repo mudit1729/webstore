@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.dress_id }} — {{ product.title }} | Rangoli Boutique{% endblock %}
+{% block description %}{{ product.title }} — INR {{ "{:,.0f}".format(product.price_inr_display) }}. Curated ethnic wear at Rangoli Boutique.{% endblock %}
+
+{% block og_title %}{{ product.dress_id }} — {{ product.title }}{% endblock %}
+{% block og_description %}INR {{ "{:,.0f}".format(product.price_inr_display) }} (~${{ product.price_usd_display(usd_rate) }} approx){% endblock %}
+{% block og_image %}
+{% set hero = product.ai_image or product.original_image %}
+{% if hero %}<meta property="og:image" content="{{ hero.url }}">{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    {# Breadcrumb #}
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Collection</a>
+        <span aria-hidden="true">/</span>
+        <span>{{ product.dress_id }}</span>
+    </nav>
+
+    <article class="pdp">
+        {# Gallery #}
+        <div class="pdp-gallery">
+            {% set ai_img = product.ai_image %}
+            {% set orig_img = product.original_image %}
+
+            <div class="gallery-frame">
+                {% if ai_img %}
+                <img src="{{ ai_img.url }}" alt="{{ product.title }}" id="main-image" class="gallery-img">
+                {% elif orig_img %}
+                <img src="{{ orig_img.url }}" alt="{{ product.title }}" id="main-image" class="gallery-img">
+                {% endif %}
+
+                {% if product.status == 'SOLD_OUT' %}
+                <div class="gallery-sold-overlay">
+                    <span>Sold</span>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if ai_img and orig_img %}
+            <div class="gallery-toggle">
+                <button class="toggle-btn active" onclick="switchImage('{{ ai_img.url }}', this)" type="button">
+                    <img src="{{ ai_img.url }}" alt="Styled view">
+                    <span>Styled</span>
+                </button>
+                <button class="toggle-btn" onclick="switchImage('{{ orig_img.url }}', this)" type="button">
+                    <img src="{{ orig_img.url }}" alt="Original">
+                    <span>Flat Lay</span>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Details #}
+        <div class="pdp-details">
+            <header class="pdp-header">
+                <span class="pdp-id">{{ product.dress_id }}</span>
+                <h1 class="pdp-title">{{ product.title }}</h1>
+            </header>
+
+            {% if product.description %}
+            <p class="pdp-description">{{ product.description }}</p>
+            {% endif %}
+
+            <div class="pdp-divider" aria-hidden="true"></div>
+
+            {# Price #}
+            <div class="pdp-price">
+                <span class="pdp-price-inr">&#8377;{{ "{:,.0f}".format(product.price_inr_display) }}</span>
+                <span class="pdp-price-usd">Approx ${{ product.price_usd_display(usd_rate) }} USD</span>
+            </div>
+
+            {% if product.status == 'SOLD_OUT' %}
+            <div class="pdp-sold-banner">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+                This piece has been sold
+            </div>
+            {% endif %}
+
+            {# Variants #}
+            {% if product.variants %}
+            <div class="pdp-variants">
+                {% set variant_types = product.variants | groupby('type') %}
+                {% for type_name, options in variant_types %}
+                <div class="variant-group">
+                    <span class="variant-label">{{ type_name }}</span>
+                    <div class="variant-chips">
+                        {% for opt in options %}
+                        <button class="variant-chip {% if loop.first %}active{% endif %}"
+                                data-type="{{ type_name }}"
+                                data-value="{{ opt.value }}"
+                                onclick="selectVariant(this)"
+                                type="button">
+                            {{ opt.value }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {# Tags #}
+            {% if product.categories or product.tags %}
+            <div class="pdp-tags">
+                {% for cat in product.categories %}
+                <a href="/?category={{ cat }}" class="ptag ptag--cat">{{ cat }}</a>
+                {% endfor %}
+                {% for tag in product.tags %}
+                <span class="ptag">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="pdp-divider" aria-hidden="true"></div>
+
+            {# WhatsApp CTA #}
+            {% if product.status != 'SOLD_OUT' %}
+            <a href="{{ whatsapp_link }}"
+               target="_blank"
+               rel="noopener"
+               class="wa-btn"
+               id="whatsapp-btn"
+               data-phone="{{ whatsapp_number }}"
+               data-dress-id="{{ product.dress_id }}"
+               data-page-url="{{ page_url }}">
+                <svg class="wa-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                <span class="wa-text">
+                    <span class="wa-label">Buy on WhatsApp</span>
+                    <span class="wa-hint">Message Poonam Jain directly</span>
+                </span>
+            </a>
+            {% endif %}
+
+            <div class="pdp-shipping">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z"/></svg>
+                <div>
+                    <p>Local, National &amp; International Shipping</p>
+                    <p class="shipping-fine">Rates and delivery confirmed on WhatsApp</p>
+                </div>
+            </div>
+        </div>
+    </article>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchImage(url, btn) {
+    document.getElementById('main-image').src = url;
+    document.querySelectorAll('.toggle-btn').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function selectVariant(btn) {
+    btn.parentElement.querySelectorAll('.variant-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    updateWhatsAppLink();
+}
+
+function updateWhatsAppLink() {
+    const waBtn = document.getElementById('whatsapp-btn');
+    if (!waBtn) return;
+
+    const phone = waBtn.dataset.phone;
+    const dressId = waBtn.dataset.dressId;
+    const pageUrl = waBtn.dataset.pageUrl;
+
+    const selected = [];
+    document.querySelectorAll('.variant-chip.active').forEach(btn => {
+        selected.push(btn.dataset.type + ': ' + btn.dataset.value);
+    });
+    const variantText = selected.length ? selected.join(', ') : 'Not selected';
+
+    const message = `Hi Poonam Jain, I want Dress ${dressId} from Rangoli Boutique.\nVariant: ${variantText}\nShip to: [your city, country]\nLink: ${pageUrl}`;
+    waBtn.href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+}
+
+updateWhatsAppLink();
+</script>
+{% endblock %}

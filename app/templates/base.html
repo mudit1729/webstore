@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Rangoli Boutique{% endblock %}</title>
+    <meta name="description" content="{% block description %}Rangoli Boutique — Curated Indian ethnic wear by Poonam Jain. Sarees, lehengas, suits and more.{% endblock %}">
+
+    <meta property="og:title" content="{% block og_title %}Rangoli Boutique{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Curated Indian ethnic wear{% endblock %}">
+    <meta property="og:type" content="website">
+    {% block og_image %}{% endblock %}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    <div class="top-accent" aria-hidden="true"></div>
+
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="/" class="brand">
+                <div class="brand-ornament" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" opacity="0.4"/></svg>
+                </div>
+                <div class="brand-center">
+                    <span class="brand-name">Rangoli Boutique</span>
+                    <span class="brand-sub">Curated by Poonam Jain</span>
+                </div>
+                <div class="brand-ornament" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor" opacity="0.4"/></svg>
+                </div>
+            </a>
+            <nav class="header-nav">
+                <a href="/" class="nav-link">Collection</a>
+                <span class="nav-dot" aria-hidden="true"></span>
+                <a href="/?sort=newest" class="nav-link">New Arrivals</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-divider" aria-hidden="true">
+                <span class="divider-line"></span>
+                <svg class="divider-star" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" fill="currentColor"/></svg>
+                <span class="divider-line"></span>
+            </div>
+            <p class="footer-brand">Rangoli Boutique</p>
+            <p class="footer-by">Curated with love by Poonam Jain</p>
+            <div class="footer-info">
+                <p>Shipping &mdash; Local &middot; National &middot; International</p>
+                <p class="footer-fine">USD prices are approximate. Final pricing confirmed on WhatsApp.</p>
+            </div>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
