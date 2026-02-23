@@ -63,8 +63,7 @@ def generate_ai_image(product_id, image_id, original_storage_key, version):
             image.image_data = ai_bytes
 
             # Update image record with URL
-            app_url = app.config.get("APP_URL", "").rstrip("/")
-            image.url = f"{app_url}/img/{image.id}"
+            image.url = f"/img/{image.id}"
             image.status = "READY"
             db.session.commit()
 

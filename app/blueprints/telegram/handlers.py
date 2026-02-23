@@ -118,8 +118,7 @@ def _handle_photo(message, chat_id, user_id):
     original.image_data = image_bytes
     original.status = "READY"
 
-    app_url = current_app.config.get("APP_URL", "").rstrip("/")
-    original.url = f"{app_url}/img/{original.id}"
+    original.url = f"/img/{original.id}"
 
     # Delete the AI image placeholder — publish with original directly
     if ai_image:
@@ -381,16 +380,15 @@ def _cb_approve(product, admin_id, cb_id):
         telegram_service.answer_callback_query(cb_id, "Not in DRAFT state")
         return
 
-    # Update URLs to use Flask endpoint (DB-backed)
-    app_url = current_app.config.get("APP_URL", "").rstrip("/")
+    # Update URLs to use relative Flask endpoint
     original = product.original_image
     ai_img = product.ai_image
 
     if original:
-        original.url = f"{app_url}/img/{original.id}"
+        original.url = f"/img/{original.id}"
 
     if ai_img:
-        ai_img.url = f"{app_url}/img/{ai_img.id}"
+        ai_img.url = f"/img/{ai_img.id}"
 
     product_service.publish_product(
         product.id, admin_id, ai_version=ai_img.version if ai_img else None
@@ -475,10 +473,9 @@ def _cb_publish_original(product, admin_id, cb_id):
         telegram_service.answer_callback_query(cb_id, "Not in DRAFT state")
         return
 
-    app_url = current_app.config.get("APP_URL", "").rstrip("/")
     original = product.original_image
     if original:
-        original.url = f"{app_url}/img/{original.id}"
+        original.url = f"/img/{original.id}"
 
     product_service.publish_original_only(product.id, admin_id)
 
