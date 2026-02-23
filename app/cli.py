@@ -40,6 +40,18 @@ def register_cli(app):
                 db.session.add(Settings(key=key, value=str(value)))
         db.session.commit()
 
+        # Fix any image URLs that have wrong absolute paths
+        from app.models.image import Image
+        broken = Image.query.filter(
+            Image.url.isnot(None),
+            ~Image.url.startswith("/img/")
+        ).all()
+        for img in broken:
+            img.url = f"/img/{img.id}"
+        if broken:
+            db.session.commit()
+            click.echo(f"Fixed {len(broken)} image URLs.")
+
         click.echo("Database initialized with default settings.")
 
     @app.cli.command("seed-demo")

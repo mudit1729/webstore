@@ -28,9 +28,8 @@ def download(storage_key):
 
 
 def get_image_url(image_id):
-    """Return the Flask endpoint URL for an image."""
-    app_url = current_app.config.get("APP_URL", "").rstrip("/")
-    return f"{app_url}/img/{image_id}"
+    """Return the relative URL for an image."""
+    return f"/img/{image_id}"
 
 
 def get_signed_url(storage_key, expires_in=900):
