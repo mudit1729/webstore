@@ -958,6 +958,71 @@ button { font-family: inherit; cursor: pointer; }
     margin-top: 0.25rem;
 }
 
+.footer-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.footer-social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--sand);
+    color: var(--earth);
+    transition: all 0.2s ease;
+}
+
+.footer-social-link:hover {
+    color: var(--burgundy);
+    border-color: var(--burgundy);
+    background: rgba(122, 59, 63, 0.05);
+}
+
+/* ==========================================================================
+   Floating WhatsApp Button
+   ========================================================================== */
+.wa-float {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 999;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--whatsapp);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(37, 211, 102, 0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wa-float:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 24px rgba(37, 211, 102, 0.45);
+    color: var(--white);
+}
+
+@media (max-width: 480px) {
+    .wa-float {
+        bottom: 1rem;
+        right: 1rem;
+        width: 50px;
+        height: 50px;
+    }
+    .wa-float svg {
+        width: 24px;
+        height: 24px;
+    }
+}
+
 /* ==========================================================================
    Responsive
    ========================================================================== */

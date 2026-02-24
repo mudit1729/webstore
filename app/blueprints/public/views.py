@@ -20,6 +20,7 @@ def catalog():
 
     usd_rate = Settings.get_usd_rate()
     instagram_posts = Settings.get_instagram_posts()
+    whatsapp_number = Settings.get_whatsapp_number()
 
     return render_template(
         "catalog.html",
@@ -27,6 +28,7 @@ def catalog():
         pagination=pagination,
         usd_rate=usd_rate,
         instagram_posts=instagram_posts,
+        whatsapp_number=whatsapp_number,
     )
 
 
